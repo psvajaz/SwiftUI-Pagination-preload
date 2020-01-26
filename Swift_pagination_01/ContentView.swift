@@ -13,20 +13,21 @@ struct ContentView: View {
     @State private var isLoading: Bool = false
     @State private var page: Int = 0
     private let pageSize: Int = 25
+    private let offset: Int = 10
     
     var body: some View {
         NavigationView {
             List(items) { item in
                 VStack {
                     Text("page:\(item.page) item:\(item.sIndex)")
-                  
+                    
                     if self.isLoading && self.items.isLastItem(item) {
                         Divider()
                         Text("Loading ...")
                             .padding(.vertical)
-
+                        
                     }
-  
+                    
                 }.onAppear {
                     self.listItemAppears(item)
                 }
@@ -41,15 +42,15 @@ struct ContentView: View {
 
 extension ContentView {
     private func listItemAppears<Item: Identifiable>(_ item: Item) {
-        if items.isLastItem(item) {
+        if items.isThresholdItem(offset: offset,item: item) {
             isLoading = true
             
             /*
-                Simulated async behaviour:
-                Creates items for the next page and
-                appends them to the list after a short delay
+             Simulated async behaviour:
+             Creates items for the next page and
+             appends them to the list after a short delay
              */
-            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 1) {
+            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.5) {
                 self.page += 1
                 let moreItems = self.getMoreItems(forPage: self.page, pageSize: self.pageSize)
                 self.items.append(contentsOf: moreItems)
@@ -58,10 +59,18 @@ extension ContentView {
             }
         }
     }
+    /*
     func getMoreItems(forPage: Int, pageSize: Int) -> [DemoItem]{
         let sitems: [DemoItem] = Array(0...24).map { DemoItem(sIndex: $0,page:forPage) }
         return sitems
     }
+ */
+    private func getMoreItems(forPage page: Int,
+                                pageSize: Int) -> [DemoItem] {
+          let maximum = ((page * pageSize) + pageSize) - 1
+          let moreItems: [DemoItem] = Array(items.count...maximum).map { DemoItem(sIndex: $0,page:page)  }
+          return moreItems
+      }
 }
 
 struct ContentView_Previews: PreviewProvider {
